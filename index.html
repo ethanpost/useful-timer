@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+  <div class="bg-image">
+    <img id="bg" src="" alt="background">
+  </div>
+
+  <button class="fullscreen-btn" id="fullscreenBtn" title="Toggle fullscreen">
+    <svg id="fsIcon" viewBox="0 0 24 24">
+      <polyline points="15 3 21 3 21 9" />
+      <polyline points="9 21 3 21 3 15" />
+      <line x1="21" y1="3" x2="14" y2="10" />
+      <line x1="3" y1="21" x2="10" y2="14" />
+    </svg>
+  </button>
+
+  <div class="timer-overlay">
+    <div class="timer-display" id="display">25:00</div>
+    <div class="progress-bar">
+      <div class="fill" id="progressFill" style="width:100%"></div>
+    </div>
+    <div class="controls">
+      <button id="btn25" class="active" data-minutes="25">25 min</button>
+      <button id="btn50" data-minutes="50">50 min</button>
+      <button id="startBtn">Start</button>
+      <button id="resetBtn" class="reset-btn">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    const IMAGES = [
+      'images/paulrousso_human_kindness_is_overflowing_and_I_think_its_going__d28b94bd-65a3-45e2-972b-bc689bf0f591.webp',
+      'images/paulrousso_human_kindness_is_overflowing_and_I_think_its_going__6b8dc34d-329e-47ad-aa9b-124c2428ec3f.webp',
+      'images/paulrousso_beautiful_farmland_with_pond_painted_in_a_norman_roc_c823e224-f60c-4c01-82b6-ee8175e35897.webp',
+      'images/tiktik8644_cinematic_sci-fi_movie._A_narrow_corridor_in_an_indu_e1b3b0ea-8620-4c40-901d-69cf12b35197.webp'
+    ];
+
+    const KEY = 'pomodoro_state';
+    const display = document.getElementById('display');
+    const progressFill = document.getElementById('progressFill');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const btn25 = document.getElementById('btn25');
+    const btn50 = document.getElementById('btn50');
+
+    let totalSeconds = 25 * 60;
+    let remainingSeconds = totalSeconds;
+    let running = false;
+    let intervalId = null;
+    let currentImageIdx = 0;
+
+    function showImage(idx) {
+      currentImageIdx = ((idx % IMAGES.length) + IMAGES.length) % IMAGES.length;
+      document.getElementById('bg').src = IMAGES[currentImageIdx];
+    }
+
+    function pickRandomImage() {
+      showImage(Math.floor(Math.random() * IMAGES.length));
+    }
+
+    function saveState() {
+      const state = {
+        totalSeconds,
+        remainingSeconds,
+        running,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return false;
+      try {
+        const state = JSON.parse(raw);
+        totalSeconds = state.totalSeconds;
+        remainingSeconds = state.remainingSeconds;
+
+        if (state.running) {
+          const elapsed = Math.floor((Date.now() - state.timestamp) / 1000);
+          remainingSeconds = Math.max(0, state.remainingSeconds - elapsed);
+          running = true;
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateDisplay() {
+      display.textContent = formatTime(remainingSeconds);
+
+      const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 0;
+      progressFill.style.width = pct + '%';
+
+      const warningThreshold = totalSeconds * 0.1;
+      display.classList.toggle('warning', remainingSeconds > 0 && remainingSeconds <= warningThreshold);
+      progressFill.classList.toggle('warning', remainingSeconds > 0 && remainingSeconds <= warningThreshold);
+      display.classList.toggle('done', remainingSeconds === 0 && running);
+    }
+
+    function updateDurationButtons() {
+      const isMode25 = totalSeconds === 25 * 60;
+      btn25.classList.toggle('active', isMode25);
+      btn50.classList.toggle('active', !isMode25);
+    }
+
+    function tick() {
+      if (remainingSeconds > 0) {
+        remainingSeconds--;
+        updateDisplay();
+        saveState();
+      }
+      if (remainingSeconds <= 0) {
+        display.textContent = '00:00';
+        display.classList.add('done');
+        document.title = 'Done!';
+      }
+    }
+
+    function startTimer() {
+      if (remainingSeconds <= 0) return;
+      running = true;
+      startBtn.textContent = 'Pause';
+      intervalId = setInterval(tick, 1000);
+      saveState();
+    }
+
+    function pauseTimer() {
+      running = false;
+      startBtn.textContent = 'Start';
+      clearInterval(intervalId);
+      intervalId = null;
+      display.classList.remove('done');
+      saveState();
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+      document.title = 'Pomodoro Timer';
+      saveState();
+    }
+
+    function setDuration(minutes) {
+      pauseTimer();
+      totalSeconds = minutes * 60;
+      remainingSeconds = totalSeconds;
+      updateDurationButtons();
+      updateDisplay();
+      document.title = 'Pomodoro Timer';
+      saveState();
+    }
+
+    startBtn.addEventListener('click', () => {
+      running ? pauseTimer() : startTimer();
+    });
+
+    resetBtn.addEventListener('click', resetTimer);
+    btn25.addEventListener('click', () => setDuration(25));
+    btn50.addEventListener('click', () => setDuration(50));
+
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const fsIcon = document.getElementById('fsIcon');
+
+    const expandSVG = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
+    const shrinkSVG = '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/>';
+
+    function updateFsIcon() {
+      fsIcon.innerHTML = document.fullscreenElement ? shrinkSVG : expandSVG;
+    }
+
+    fullscreenBtn.addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        document.documentElement.requestFullscreen();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', updateFsIcon);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        showImage(currentImageIdx + 1);
+      } else if (e.key === 'ArrowLeft') {
+        showImage(currentImageIdx - 1);
+      }
+    });
+
+    pickRandomImage();
+
+    if (loadState()) {
+      updateDurationButtons();
+      updateDisplay();
+      if (running) {
+        startBtn.textContent = 'Pause';
+        intervalId = setInterval(tick, 1000);
+      }
+    }
+  </script>
+
+</body>
+</html>
