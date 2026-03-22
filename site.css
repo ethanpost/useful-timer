@@ -134,6 +134,14 @@ body {
   background: #ff6b6b;
 }
 
+.analog-clock {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  border-radius: 50%;
+}
+
 .fullscreen-btn {
   position: fixed;
   top: 16px;
