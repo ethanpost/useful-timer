@@ -1,52 +1,68 @@
 # Useful Timer
 
-A calm, full-screen Pomodoro timer you can open in a browser and actually *live with* for a work session. No accounts, no build step, no framework churn—just HTML, CSS, and a little JavaScript that tries to get the small details right.
+`Useful Timer` is a single-page focus timer built with plain HTML, CSS, and JavaScript. Open it in a browser and you get a large Pomodoro timer, a live analog clock, interval chimes, draggable panels, fullscreen mode, rotating backgrounds, and lightweight sticky notes that all persist locally in the browser.
 
-## Why it exists
+There is no build step, no framework, and no account setup. It is just a static page you can keep open on a laptop or second monitor during a work session.
 
-Focus tools often feel either bare or busy. This one sits in the middle: a big readable countdown, a real analog clock, optional gentle structure from repeating short intervals, and backgrounds that are pleasant to stare at when you glance up. State persists if you refresh or close the tab by accident, and the pieces you care about can be dragged where your screen layout needs them.
+## Features
 
-## Try it
+- `25 min` and `50 min` timer modes with start, pause, and reset controls
+- End-of-session alarm generated with the Web Audio API
+- Warning state during the last 10% of a session and pulsing when time reaches zero
+- Analog clock with a live wedge showing how much of the next hour your remaining session occupies
+- Three interval gauges running on a repeating 90-second cycle with optional bell chimes
+- Draggable timer, clock, and interval panels with snap-to-position behavior
+- Click-to-create sticky notes that can be moved, resized, edited, and dismissed
+- Random fullscreen background images with left/right arrow navigation
+- Fullscreen toggle for distraction-free use
+- Persistent timer state, panel positions, bell preference, and sticky notes via `localStorage`
+
+## Getting Started
 
 1. Clone or download this repository.
-2. Open `index.html` in a modern desktop or mobile browser (double-click, or serve the folder with any static file server if you prefer).
+2. Open `index.html` in any modern browser.
 
-That is the whole install story.
+That is the entire setup.
 
-## What you get
+## How To Use
 
-- **Sessions** — Choose **25** or **50** minutes, start, pause, and reset. The display soft-warns in the last 10% of the run and pulses when time is up.
-- **Alarm** — A simple synthesized buzzer when the session ends (toggle with the bell next to the timer). Preference is remembered.
-- **Analog clock** — Canvas-drawn, shows the real time. While a session is running, a wedge shows roughly how much of the next hour your remaining time occupies—handy for orienting without doing mental math.
-- **Three interval gauges** — A repeating **90-second** wall-clock cycle split into three **30-second** segments. When the interval bell is on, you get a short chime at each boundary—useful for micro-check-ins, hydration, or posture without leaving flow. The bell is independent of the main timer alarm and can be muted separately.
-- **Backgrounds** — A small curated set of full-bleed images (stored under `images/`). Press **←** and **→** to change the scene; the app picks one at random on load.
-- **Layout** — The clock, timer block, and interval panel are **draggable** (grab away from buttons). They snap to sensible anchor points and **positions are saved** in the browser. On window resize, layouts re-snap so nothing drifts off-screen.
-- **Fullscreen** — One click to fill the display when you want fewer distractions.
-- **Resilience** — Timer progress and running/paused state are stored in `localStorage`, with elapsed time corrected if you return after a break.
+1. Pick `25 min` or `50 min`.
+2. Press `Start` to begin the session.
+3. Drag the timer, clock, or interval panel to the part of the screen you prefer.
+4. Click anywhere on the background to create a sticky note.
+5. Use the bell button on the interval panel to mute or enable interval chimes.
+6. Press the fullscreen button in the top-right corner when you want a cleaner display.
 
-## Keyboard
+## Keyboard Shortcuts
 
-| Key | Action        |
-| --- | ------------- |
-| ←   | Previous image |
-| →   | Next image    |
+| Key | Action |
+| --- | --- |
+| `Left Arrow` | Previous background image |
+| `Right Arrow` | Next background image |
 
-## Customizing
+## Project Structure
 
-Everything lives in `index.html` and `site.css`.
+- `index.html` contains the full app markup and JavaScript behavior
+- `site.css` contains the visual styling and layout rules
+- `images/` contains the bundled background artwork
 
-- **Images** — Edit the `IMAGES` array near the top of the script to point at your own files (keep `images/` or update paths).
-- **Interval length** — Constants `INTERVAL_DURATION` (seconds per segment) and `INTERVAL_COUNT` control the gauge cycle and chime rhythm.
-- **Look and feel** — Typography, shadows, and overlay styling are in `site.css`.
+## Customization
 
-## Requirements
+- Update the `IMAGES` array in `index.html` to use your own backgrounds
+- Adjust `INTERVAL_DURATION` and `INTERVAL_COUNT` in `index.html` to change the interval cycle
+- Edit `site.css` to change typography, spacing, overlays, note styling, and overall look
 
-Any recent browser with **Canvas**, **localStorage**, **Fullscreen API**, and **Web Audio** (for alarms) is enough. The bundled art is **WebP**; very old browsers may need different image formats if you swap assets.
+## Browser Requirements
+
+Use a modern browser with support for:
+
+- `localStorage`
+- `<canvas>`
+- the Fullscreen API
+- the Web Audio API
+
+The included background images are `.webp` files, so if you replace them for older browsers you may prefer different formats.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
----
-
-Made to be useful on a second monitor, a laptop at a café, or anywhere you want focus without signing up for another service. If it helps your day, that is enough.
+MIT. See [`LICENSE`](LICENSE).

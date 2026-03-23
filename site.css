@@ -226,3 +226,114 @@ body {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+.note-spawn-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  cursor: crosshair;
+}
+
+.sticky-notes-root {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.sticky-notes-root .sticky-note {
+  pointer-events: auto;
+}
+
+.sticky-note {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  min-height: 120px;
+  max-width: min(90vw, 560px);
+  max-height: min(85vh, 480px);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  resize: none;
+}
+
+.sticky-note.dragging {
+  opacity: 0.8;
+}
+
+.sticky-note__header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: grab;
+  user-select: none;
+}
+
+.sticky-note.dragging .sticky-note__header {
+  cursor: grabbing;
+}
+
+.sticky-note__close {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sticky-note__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sticky-note__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.sticky-note__textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 10px 12px 14px;
+  border: none;
+  resize: none;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #fff;
+  background: transparent;
+  outline: none;
+}
+
+.sticky-note__textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.sticky-note__resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0.35) 55%, transparent 55%);
+}

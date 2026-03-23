@@ -33,6 +33,9 @@
     </div>
   </div>
 
+  <div class="note-spawn-layer" id="noteSpawnLayer" title="Click to add a sticky note"></div>
+  <div id="stickyNotesRoot" class="sticky-notes-root"></div>
+
   <div class="interval-overlay" id="intervalOverlay">
     <div class="interval-header">
       <button id="bellToggle" class="bell-btn active" title="Toggle bell"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
@@ -375,6 +378,174 @@
       }
       savePositions();
     });
+
+    const STICKY_NOTES_KEY = 'pomodoro_sticky_notes';
+    const stickyNotesRoot = document.getElementById('stickyNotesRoot');
+    const noteSpawnLayer = document.getElementById('noteSpawnLayer');
+
+    let stickySaveTimer = null;
+    function saveStickyNotesNow() {
+      const payload = [];
+      stickyNotesRoot.querySelectorAll('.sticky-note').forEach((note) => {
+        const ta = note.querySelector('.sticky-note__textarea');
+        payload.push({
+          id: note.dataset.noteId,
+          x: parseFloat(note.style.left) || 0,
+          y: parseFloat(note.style.top) || 0,
+          w: note.offsetWidth,
+          h: note.offsetHeight,
+          text: ta ? ta.value : ''
+        });
+      });
+      localStorage.setItem(STICKY_NOTES_KEY, JSON.stringify(payload));
+    }
+    function scheduleStickySave() {
+      clearTimeout(stickySaveTimer);
+      stickySaveTimer = setTimeout(saveStickyNotesNow, 300);
+    }
+
+    let stickyDrag = null;
+    let stickyResize = null;
+
+    document.addEventListener('mousemove', (e) => {
+      if (stickyDrag) {
+        const { note, offX, offY } = stickyDrag;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const w = note.offsetWidth;
+        const h = note.offsetHeight;
+        let nx = e.clientX - offX;
+        let ny = e.clientY - offY;
+        nx = Math.max(0, Math.min(nx, vw - w));
+        ny = Math.max(0, Math.min(ny, vh - h));
+        note.style.left = nx + 'px';
+        note.style.top = ny + 'px';
+      } else if (stickyResize) {
+        const { note, startX, startY, startW, startH } = stickyResize;
+        const dw = e.clientX - startX;
+        const dh = e.clientY - startY;
+        const minW = 160;
+        const minH = 120;
+        const maxW = Math.min(window.innerWidth * 0.9, 560);
+        const maxH = Math.min(window.innerHeight * 0.85, 480);
+        const nw = Math.max(minW, Math.min(startW + dw, maxW));
+        const nh = Math.max(minH, Math.min(startH + dh, maxH));
+        note.style.width = nw + 'px';
+        note.style.height = nh + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (stickyDrag) {
+        stickyDrag.note.classList.remove('dragging');
+        stickyDrag = null;
+        saveStickyNotesNow();
+      }
+      if (stickyResize) {
+        stickyResize.note.classList.remove('dragging');
+        stickyResize = null;
+        saveStickyNotesNow();
+      }
+    });
+
+    function mountStickyNote(data) {
+      const id = data.id || ('n' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
+      const note = document.createElement('div');
+      note.className = 'sticky-note';
+      note.dataset.noteId = id;
+      note.style.left = (data.x ?? 48) + 'px';
+      note.style.top = (data.y ?? 48) + 'px';
+      note.style.width = (data.w || 220) + 'px';
+      note.style.height = (data.h || 170) + 'px';
+
+      const header = document.createElement('div');
+      header.className = 'sticky-note__header';
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'sticky-note__close';
+      closeBtn.setAttribute('aria-label', 'Close note');
+      closeBtn.textContent = '\u00D7';
+      header.appendChild(closeBtn);
+
+      const body = document.createElement('div');
+      body.className = 'sticky-note__body';
+      const ta = document.createElement('textarea');
+      ta.className = 'sticky-note__textarea';
+      ta.placeholder = 'Jot something down\u2026';
+      ta.value = data.text || '';
+      const resize = document.createElement('div');
+      resize.className = 'sticky-note__resize';
+      resize.setAttribute('aria-hidden', 'true');
+      body.appendChild(ta);
+      body.appendChild(resize);
+
+      note.appendChild(header);
+      note.appendChild(body);
+      stickyNotesRoot.appendChild(note);
+
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        note.remove();
+        saveStickyNotesNow();
+      });
+
+      ta.addEventListener('input', scheduleStickySave);
+
+      header.addEventListener('mousedown', (e) => {
+        if (e.target === closeBtn) return;
+        e.preventDefault();
+        stickyResize = null;
+        const rect = note.getBoundingClientRect();
+        stickyDrag = {
+          note,
+          offX: e.clientX - rect.left,
+          offY: e.clientY - rect.top
+        };
+        note.classList.add('dragging');
+      });
+
+      resize.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stickyDrag = null;
+        stickyResize = {
+          note,
+          startX: e.clientX,
+          startY: e.clientY,
+          startW: note.offsetWidth,
+          startH: note.offsetHeight
+        };
+        note.classList.add('dragging');
+      });
+
+      return note;
+    }
+
+    function loadStickyNotes() {
+      const raw = localStorage.getItem(STICKY_NOTES_KEY);
+      if (!raw) return;
+      try {
+        const list = JSON.parse(raw);
+        if (!Array.isArray(list)) return;
+        list.forEach((item) => mountStickyNote(item));
+      } catch {}
+    }
+
+    noteSpawnLayer.addEventListener('click', (e) => {
+      if (e.target !== noteSpawnLayer) return;
+      const w = 220;
+      const h = 170;
+      let x = e.clientX - w / 2;
+      let y = e.clientY - 24;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      x = Math.max(8, Math.min(x, vw - w - 8));
+      y = Math.max(8, Math.min(y, vh - h - 8));
+      mountStickyNote({ x, y, w, h, text: '' });
+      saveStickyNotesNow();
+    });
+
+    loadStickyNotes();
 
     const clockCanvas = document.getElementById('analogClock');
     const ctx = clockCanvas.getContext('2d');
