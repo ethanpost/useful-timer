@@ -205,6 +205,116 @@
       }
     });
 
+    const POSITIONS_KEY = 'pomodoro_positions';
+    const MARGIN = 24;
+
+    function getSnapPoints(elW, elH) {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      return [
+        { x: MARGIN,                    y: MARGIN,                     label: 'top-left' },
+        { x: (vw - elW) / 2,            y: MARGIN,                     label: 'top-center' },
+        { x: vw - elW - MARGIN,         y: MARGIN,                     label: 'top-right' },
+        { x: MARGIN,                    y: (vh - elH) / 2,             label: 'mid-left' },
+        { x: (vw - elW) / 2,            y: (vh - elH) / 2,             label: 'center' },
+        { x: vw - elW - MARGIN,         y: (vh - elH) / 2,             label: 'mid-right' },
+        { x: MARGIN,                    y: vh - elH - MARGIN,           label: 'bot-left' },
+        { x: (vw - elW) / 2,            y: vh - elH - MARGIN,           label: 'bot-center' },
+        { x: vw - elW - MARGIN,         y: vh - elH - MARGIN,           label: 'bot-right' },
+      ];
+    }
+
+    function snapTo(el, x, y) {
+      const rect = el.getBoundingClientRect();
+      const points = getSnapPoints(rect.width, rect.height);
+      let best = points[0], bestDist = Infinity;
+      for (const p of points) {
+        const d = Math.hypot(x - p.x, y - p.y);
+        if (d < bestDist) { bestDist = d; best = p; }
+      }
+      return best;
+    }
+
+    function applyPosition(el, x, y) {
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+      el.style.transform = 'none';
+    }
+
+    function savePositions() {
+      const data = {};
+      for (const [key, el] of Object.entries(draggables)) {
+        data[key] = { x: parseFloat(el.style.left), y: parseFloat(el.style.top) };
+      }
+      localStorage.setItem(POSITIONS_KEY, JSON.stringify(data));
+    }
+
+    function loadPositions() {
+      const raw = localStorage.getItem(POSITIONS_KEY);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function makeDraggable(el, id) {
+      let offsetX, offsetY, isDragging = false;
+
+      el.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'BUTTON') return;
+        e.preventDefault();
+        const rect = el.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        isDragging = true;
+        el.classList.add('dragging');
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        applyPosition(el, e.clientX - offsetX, e.clientY - offsetY);
+      });
+
+      document.addEventListener('mouseup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        el.classList.remove('dragging');
+        const rect = el.getBoundingClientRect();
+        const snap = snapTo(el, rect.left, rect.top);
+        applyPosition(el, snap.x, snap.y);
+        savePositions();
+      });
+    }
+
+    const timerOverlay = document.querySelector('.timer-overlay');
+    const draggables = { clock: document.getElementById('analogClock'), timer: timerOverlay };
+
+    function initPositions() {
+      const saved = loadPositions();
+      for (const [key, el] of Object.entries(draggables)) {
+        if (saved && saved[key]) {
+          applyPosition(el, saved[key].x, saved[key].y);
+        } else {
+          const rect = el.getBoundingClientRect();
+          const defaults = key === 'clock'
+            ? { x: MARGIN, y: MARGIN }
+            : { x: (window.innerWidth - rect.width) / 2, y: window.innerHeight - rect.height - MARGIN };
+          applyPosition(el, defaults.x, defaults.y);
+        }
+        makeDraggable(el, key);
+      }
+    }
+
+    initPositions();
+    window.addEventListener('resize', () => {
+      for (const [key, el] of Object.entries(draggables)) {
+        const rect = el.getBoundingClientRect();
+        const snap = snapTo(el, rect.left, rect.top);
+        applyPosition(el, snap.x, snap.y);
+      }
+      savePositions();
+    });
+
     const clockCanvas = document.getElementById('analogClock');
     const ctx = clockCanvas.getContext('2d');
     const clockSize = clockCanvas.width;
