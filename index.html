@@ -24,7 +24,10 @@
   </button>
 
   <div class="timer-overlay">
-    <div class="timer-display" id="display">25:00</div>
+    <div class="timer-display-row">
+      <div class="timer-display" id="display">25:00</div>
+      <button id="timerBellToggle" class="bell-btn timer-bell active" title="Toggle timer alarm"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+    </div>
     <div class="controls">
       <button id="btn25" class="active" data-minutes="25">25 min</button>
       <button id="btn50" data-minutes="50">50 min</button>
@@ -71,6 +74,18 @@
     let running = false;
     let intervalId = null;
     let currentImageIdx = 0;
+
+    let audioCtx = null;
+
+    let timerBellEnabled = localStorage.getItem('pomodoro_timer_bell') !== 'off';
+    const timerBellToggle = document.getElementById('timerBellToggle');
+    timerBellToggle.classList.toggle('active', timerBellEnabled);
+
+    timerBellToggle.addEventListener('click', () => {
+      timerBellEnabled = !timerBellEnabled;
+      timerBellToggle.classList.toggle('active', timerBellEnabled);
+      localStorage.setItem('pomodoro_timer_bell', timerBellEnabled ? 'on' : 'off');
+    });
 
     function showImage(idx) {
       currentImageIdx = ((idx % IMAGES.length) + IMAGES.length) % IMAGES.length;
@@ -131,6 +146,40 @@
       btn50.classList.toggle('active', !isMode25);
     }
 
+    let buzzerNodes = null;
+    function playBuzzer() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const duration = 5;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'square';
+      osc.frequency.value = 440;
+      const t = audioCtx.currentTime;
+      gain.gain.setValueAtTime(0.15, t);
+      for (let i = 0; i < duration * 4; i++) {
+        const on = t + i * 0.25;
+        gain.gain.setValueAtTime(0.15, on);
+        gain.gain.setValueAtTime(0.02, on + 0.15);
+      }
+      gain.gain.setValueAtTime(0, t + duration);
+      osc.start(t);
+      osc.stop(t + duration);
+      buzzerNodes = { osc, gain };
+    }
+
+    function stopBuzzer() {
+      if (buzzerNodes) {
+        try {
+          buzzerNodes.gain.gain.cancelScheduledValues(0);
+          buzzerNodes.gain.gain.setValueAtTime(0, audioCtx.currentTime);
+          buzzerNodes.osc.stop();
+        } catch {}
+        buzzerNodes = null;
+      }
+    }
+
     function tick() {
       if (remainingSeconds > 0) {
         remainingSeconds--;
@@ -141,6 +190,7 @@
         display.textContent = '00:00';
         display.classList.add('done');
         document.title = 'Done!';
+        if (timerBellEnabled) playBuzzer();
       }
     }
 
@@ -158,6 +208,7 @@
       clearInterval(intervalId);
       intervalId = null;
       display.classList.remove('done');
+      stopBuzzer();
       saveState();
     }
 
@@ -436,7 +487,6 @@
       localStorage.setItem('pomodoro_bell', bellEnabled ? 'on' : 'off');
     });
 
-    let audioCtx = null;
     function playBell() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       function ding(delay) {
