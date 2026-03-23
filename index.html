@@ -388,13 +388,15 @@
       const payload = [];
       stickyNotesRoot.querySelectorAll('.sticky-note').forEach((note) => {
         const ta = note.querySelector('.sticky-note__textarea');
+        const stampEl = note.querySelector('.sticky-note__stamp');
         payload.push({
           id: note.dataset.noteId,
           x: parseFloat(note.style.left) || 0,
           y: parseFloat(note.style.top) || 0,
           w: note.offsetWidth,
           h: note.offsetHeight,
-          text: ta ? ta.value : ''
+          text: ta ? ta.value : '',
+          stamp: stampEl ? stampEl.textContent : ''
         });
       });
       localStorage.setItem(STICKY_NOTES_KEY, JSON.stringify(payload));
@@ -406,6 +408,27 @@
 
     let stickyDrag = null;
     let stickyResize = null;
+
+    function findMergeTarget(draggedNote) {
+      const dr = draggedNote.getBoundingClientRect();
+      const cx = dr.left + dr.width / 2;
+      const cy = dr.top + dr.height / 2;
+      const allNotes = stickyNotesRoot.querySelectorAll('.sticky-note');
+      for (const other of allNotes) {
+        if (other === draggedNote) continue;
+        const or = other.getBoundingClientRect();
+        if (cx >= or.left && cx <= or.right && cy >= or.top && cy <= or.bottom) {
+          return other;
+        }
+      }
+      return null;
+    }
+
+    function clearMergeHighlights() {
+      stickyNotesRoot.querySelectorAll('.sticky-note--merge-target').forEach(
+        n => n.classList.remove('sticky-note--merge-target')
+      );
+    }
 
     document.addEventListener('mousemove', (e) => {
       if (stickyDrag) {
@@ -420,6 +443,10 @@
         ny = Math.max(0, Math.min(ny, vh - h));
         note.style.left = nx + 'px';
         note.style.top = ny + 'px';
+
+        clearMergeHighlights();
+        const target = findMergeTarget(note);
+        if (target) target.classList.add('sticky-note--merge-target');
       } else if (stickyResize) {
         const { note, startX, startY, startW, startH } = stickyResize;
         const dw = e.clientX - startX;
@@ -437,7 +464,33 @@
 
     document.addEventListener('mouseup', () => {
       if (stickyDrag) {
-        stickyDrag.note.classList.remove('dragging');
+        const draggedNote = stickyDrag.note;
+        draggedNote.classList.remove('dragging');
+        clearMergeHighlights();
+
+        const target = findMergeTarget(draggedNote);
+        if (target) {
+          const draggedTa = draggedNote.querySelector('.sticky-note__textarea');
+          const targetTa = target.querySelector('.sticky-note__textarea');
+          const draggedText = draggedTa ? draggedTa.value.trim() : '';
+          const targetText = targetTa ? targetTa.value : '';
+
+          const now = new Date();
+          const pad = (n) => String(n).padStart(2, '0');
+          const stampStr = pad(now.getMonth() + 1) + '/' + pad(now.getDate()) + '/' + now.getFullYear()
+            + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+
+          if (targetTa && draggedText) {
+            targetTa.value = targetText + (targetText.trim() ? '\n' : '')
+              + '── ' + stampStr + ' ──\n' + draggedText;
+          }
+
+          const stampEl = target.querySelector('.sticky-note__stamp');
+          if (stampEl) stampEl.textContent = stampStr;
+
+          draggedNote.remove();
+        }
+
         stickyDrag = null;
         saveStickyNotesNow();
       }
@@ -460,6 +513,10 @@
 
       const header = document.createElement('div');
       header.className = 'sticky-note__header';
+      const stamp = document.createElement('span');
+      stamp.className = 'sticky-note__stamp';
+      stamp.textContent = data.stamp || '';
+      header.appendChild(stamp);
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'sticky-note__close';

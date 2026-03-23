@@ -264,16 +264,31 @@ body {
   opacity: 0.8;
 }
 
+.sticky-note--merge-target {
+  outline: 2px solid rgba(120, 220, 255, 0.7);
+  outline-offset: 2px;
+  background: rgba(120, 220, 255, 0.12);
+}
+
 .sticky-note__header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
   padding: 6px 8px;
   background: rgba(255, 255, 255, 0.06);
   cursor: grab;
   user-select: none;
+}
+
+.sticky-note__stamp {
+  flex: 1;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 2px;
 }
 
 .sticky-note.dragging .sticky-note__header {
