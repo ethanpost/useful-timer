@@ -24,10 +24,7 @@
   </button>
 
   <div class="timer-overlay">
-    <div class="timer-display-row">
-      <div class="timer-display" id="display">25:00</div>
-      <button id="timerBellToggle" class="bell-btn timer-bell active" title="Toggle timer alarm"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
-    </div>
+    <div class="timer-display" id="display">25:00</div>
     <div class="controls">
       <button id="btn25" class="active" data-minutes="25">25 min</button>
       <button id="btn50" data-minutes="50">50 min</button>
@@ -69,16 +66,6 @@
     let currentImageIdx = 0;
 
     let audioCtx = null;
-
-    let timerBellEnabled = localStorage.getItem('pomodoro_timer_bell') !== 'off';
-    const timerBellToggle = document.getElementById('timerBellToggle');
-    timerBellToggle.classList.toggle('active', timerBellEnabled);
-
-    timerBellToggle.addEventListener('click', () => {
-      timerBellEnabled = !timerBellEnabled;
-      timerBellToggle.classList.toggle('active', timerBellEnabled);
-      localStorage.setItem('pomodoro_timer_bell', timerBellEnabled ? 'on' : 'off');
-    });
 
     function showImage(idx) {
       currentImageIdx = ((idx % IMAGES.length) + IMAGES.length) % IMAGES.length;
@@ -140,6 +127,7 @@
     }
 
     let buzzerNodes = null;
+    let timerAlarmPlayed = false;
     function playBuzzer() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const duration = 5;
@@ -180,16 +168,25 @@
         saveState();
       }
       if (remainingSeconds <= 0) {
+        running = false;
+        clearInterval(intervalId);
+        intervalId = null;
+        startBtn.textContent = 'Start';
         display.textContent = '00:00';
         display.classList.add('done');
         document.title = 'Done!';
-        if (timerBellEnabled) playBuzzer();
+        if (!timerAlarmPlayed) {
+          playBuzzer();
+          timerAlarmPlayed = true;
+        }
+        saveState();
       }
     }
 
     function startTimer() {
       if (remainingSeconds <= 0) return;
       running = true;
+      timerAlarmPlayed = false;
       startBtn.textContent = 'Pause';
       intervalId = setInterval(tick, 1000);
       saveState();
@@ -197,6 +194,7 @@
 
     function pauseTimer() {
       running = false;
+      timerAlarmPlayed = false;
       startBtn.textContent = 'Start';
       clearInterval(intervalId);
       intervalId = null;

@@ -47,17 +47,6 @@ body {
   opacity: 0.8;
 }
 
-.timer-display-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.bell-btn.timer-bell {
-  margin-top: 1.1em;
-  align-self: flex-start;
-}
-
 .timer-display {
   font-size: 6rem;
   font-weight: 700;
