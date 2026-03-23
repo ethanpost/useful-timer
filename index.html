@@ -25,14 +25,26 @@
 
   <div class="timer-overlay">
     <div class="timer-display" id="display">25:00</div>
-    <div class="progress-bar">
-      <div class="fill" id="progressFill" style="width:100%"></div>
-    </div>
     <div class="controls">
       <button id="btn25" class="active" data-minutes="25">25 min</button>
       <button id="btn50" data-minutes="50">50 min</button>
       <button id="startBtn">Start</button>
       <button id="resetBtn" class="reset-btn">Reset</button>
+    </div>
+  </div>
+
+  <div class="interval-overlay" id="intervalOverlay">
+    <div class="interval-bar">
+      <span class="interval-label">1</span>
+      <div class="interval-track"><div class="interval-fill" id="interval1"></div></div>
+    </div>
+    <div class="interval-bar">
+      <span class="interval-label">2</span>
+      <div class="interval-track"><div class="interval-fill" id="interval2"></div></div>
+    </div>
+    <div class="interval-bar">
+      <span class="interval-label">3</span>
+      <div class="interval-track"><div class="interval-fill" id="interval3"></div></div>
     </div>
   </div>
 
@@ -46,7 +58,6 @@
 
     const KEY = 'pomodoro_state';
     const display = document.getElementById('display');
-    const progressFill = document.getElementById('progressFill');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
     const btn25 = document.getElementById('btn25');
@@ -106,12 +117,8 @@
     function updateDisplay() {
       display.textContent = formatTime(remainingSeconds);
 
-      const pct = totalSeconds > 0 ? (remainingSeconds / totalSeconds) * 100 : 0;
-      progressFill.style.width = pct + '%';
-
       const warningThreshold = totalSeconds * 0.1;
       display.classList.toggle('warning', remainingSeconds > 0 && remainingSeconds <= warningThreshold);
-      progressFill.classList.toggle('warning', remainingSeconds > 0 && remainingSeconds <= warningThreshold);
       display.classList.toggle('done', remainingSeconds === 0 && running);
     }
 
@@ -287,7 +294,19 @@
     }
 
     const timerOverlay = document.querySelector('.timer-overlay');
-    const draggables = { clock: document.getElementById('analogClock'), timer: timerOverlay };
+    const intervalOverlay = document.getElementById('intervalOverlay');
+    const draggables = {
+      clock: document.getElementById('analogClock'),
+      timer: timerOverlay,
+      intervals: intervalOverlay
+    };
+
+    function getDefaultPosition(key, el) {
+      const rect = el.getBoundingClientRect();
+      if (key === 'clock') return { x: MARGIN, y: MARGIN };
+      if (key === 'intervals') return { x: window.innerWidth - rect.width - MARGIN, y: (window.innerHeight - rect.height) / 2 };
+      return { x: (window.innerWidth - rect.width) / 2, y: window.innerHeight - rect.height - MARGIN };
+    }
 
     function initPositions() {
       const saved = loadPositions();
@@ -295,10 +314,7 @@
         if (saved && saved[key]) {
           applyPosition(el, saved[key].x, saved[key].y);
         } else {
-          const rect = el.getBoundingClientRect();
-          const defaults = key === 'clock'
-            ? { x: MARGIN, y: MARGIN }
-            : { x: (window.innerWidth - rect.width) / 2, y: window.innerHeight - rect.height - MARGIN };
+          const defaults = getDefaultPosition(key, el);
           applyPosition(el, defaults.x, defaults.y);
         }
         makeDraggable(el, key);
@@ -398,8 +414,39 @@
       ctx.fill();
     }
 
+    const INTERVAL_DURATION = 30;
+    const INTERVAL_COUNT = 3;
+    const CYCLE_DURATION = INTERVAL_DURATION * INTERVAL_COUNT;
+    const intervalFills = [
+      document.getElementById('interval1'),
+      document.getElementById('interval2'),
+      document.getElementById('interval3')
+    ];
+    function updateIntervalBars() {
+      const now = new Date();
+      const totalSec = now.getMinutes() * 60 + now.getSeconds();
+      const cycleElapsed = totalSec % CYCLE_DURATION;
+
+      for (let i = 0; i < INTERVAL_COUNT; i++) {
+        const barStart = i * INTERVAL_DURATION;
+        const barElapsed = cycleElapsed - barStart;
+        if (barElapsed >= INTERVAL_DURATION) {
+          intervalFills[i].style.width = '100%';
+          intervalFills[i].classList.add('complete');
+        } else if (barElapsed > 0) {
+          intervalFills[i].style.width = (barElapsed / INTERVAL_DURATION * 100) + '%';
+          intervalFills[i].classList.remove('complete');
+        } else {
+          intervalFills[i].style.width = '0%';
+          intervalFills[i].classList.remove('complete');
+        }
+      }
+    }
+
+    updateIntervalBars();
+
     drawClock();
-    setInterval(drawClock, 1000);
+    setInterval(() => { drawClock(); updateIntervalBars(); }, 1000);
 
     pickRandomImage();
 
