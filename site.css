@@ -135,6 +135,36 @@ body {
   opacity: 0.8;
 }
 
+.interval-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,.2);
+  transition: color .2s;
+  padding: 0;
+  line-height: 1;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.bell-btn.active {
+  color: #fff;
+}
+
+.bell-btn:hover {
+  color: rgba(255,255,255,.8);
+}
+
+.bell-btn.active:hover {
+  color: #fff;
+}
+
 .interval-bar {
   display: flex;
   align-items: center;
