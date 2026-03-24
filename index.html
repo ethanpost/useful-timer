@@ -401,7 +401,14 @@
 
     document.addEventListener('fullscreenchange', updateFsIcon);
 
+    function isEditableTarget(target) {
+      if (!target) return false;
+      const tagName = target.tagName;
+      return target.isContentEditable || tagName === 'TEXTAREA' || tagName === 'INPUT' || tagName === 'SELECT';
+    }
+
     document.addEventListener('keydown', (e) => {
+      if (isEditableTarget(e.target)) return;
       if (e.key === 'ArrowRight') {
         showImage(currentImageIdx + 1);
       } else if (e.key === 'ArrowLeft') {
@@ -558,15 +565,12 @@
     let stickyDrag = null;
     let stickyResize = null;
 
-    function findMergeTarget(draggedNote) {
-      const dr = draggedNote.getBoundingClientRect();
-      const cx = dr.left + dr.width / 2;
-      const cy = dr.top + dr.height / 2;
+    function findMergeTarget(draggedNote, clientX, clientY) {
       const allNotes = stickyNotesRoot.querySelectorAll('.sticky-note');
       for (const other of allNotes) {
         if (other === draggedNote) continue;
         const or = other.getBoundingClientRect();
-        if (cx >= or.left && cx <= or.right && cy >= or.top && cy <= or.bottom) {
+        if (clientX >= or.left && clientX <= or.right && clientY >= or.top && clientY <= or.bottom) {
           return other;
         }
       }
@@ -594,7 +598,7 @@
         note.style.top = ny + 'px';
 
         clearMergeHighlights();
-        const target = findMergeTarget(note);
+        const target = findMergeTarget(note, e.clientX, e.clientY);
         if (target) target.classList.add('sticky-note--merge-target');
       } else if (stickyResize) {
         const { note, startX, startY, startW, startH } = stickyResize;
@@ -611,13 +615,13 @@
       }
     });
 
-    document.addEventListener('mouseup', () => {
+    document.addEventListener('mouseup', (e) => {
       if (stickyDrag) {
         const draggedNote = stickyDrag.note;
         draggedNote.classList.remove('dragging');
         clearMergeHighlights();
 
-        const target = findMergeTarget(draggedNote);
+        const target = findMergeTarget(draggedNote, e.clientX, e.clientY);
         if (target) {
           const draggedTa = draggedNote.querySelector('.sticky-note__textarea');
           const targetTa = target.querySelector('.sticky-note__textarea');
@@ -633,9 +637,6 @@
             targetTa.value = targetText + (targetText.trim() ? '\n' : '')
               + '── ' + stampStr + ' ──\n' + draggedText;
           }
-
-          const stampEl = target.querySelector('.sticky-note__stamp');
-          if (stampEl) stampEl.textContent = stampStr;
 
           draggedNote.remove();
         }
@@ -777,7 +778,7 @@
 
       if (running && remainingSeconds > 0) {
         const nowAngle = ((m + s / 60) / 60) * Math.PI * 2 - Math.PI / 2;
-        const sweep = (remainingSeconds / 3600) * Math.PI * 2;
+        const sweep = (Math.min(remainingSeconds, 3600) / 3600) * Math.PI * 2;
         const endAngle = nowAngle + sweep;
         ctx.beginPath();
         ctx.moveTo(center, center);
@@ -941,14 +942,6 @@
     }
 
     function updateIntervalBars() {
-      if (!bellEnabled) {
-        for (let i = 0; i < INTERVAL_COUNT; i++) {
-          drawGauge(gaugeCtxs[i], String(i + 1), 0, 0);
-        }
-        prevCycleElapsed = null;
-        return;
-      }
-
       const now = new Date();
       const totalSec = now.getMinutes() * 60 + now.getSeconds();
       const cycleElapsed = totalSec % cycleDuration;
@@ -975,7 +968,7 @@
       if (prevCycleElapsed !== null) {
         const prevSlot = getIntervalSlot(prevCycleElapsed);
         const currSlot = getIntervalSlot(cycleElapsed);
-        if (currSlot !== prevSlot || cycleElapsed < prevCycleElapsed) {
+        if (bellEnabled && (currSlot !== prevSlot || cycleElapsed < prevCycleElapsed)) {
           playBell();
         }
       }

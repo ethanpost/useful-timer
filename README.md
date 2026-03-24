@@ -1,37 +1,38 @@
 # Useful Timer
 
-`Useful Timer` is a single-page focus timer built with plain HTML, CSS, and JavaScript. Open it in a browser and you get a large Pomodoro timer, a live analog clock, interval chimes, draggable panels, fullscreen mode, rotating backgrounds, and lightweight sticky notes that all persist locally in the browser.
+`Useful Timer` is a static, single-page focus dashboard built with plain HTML, CSS, and JavaScript. Open `index.html` in a modern browser and you get a fullscreen-friendly timer, a live analog clock, configurable interval gauges, rotating backgrounds, and lightweight sticky notes that all persist locally in the browser.
 
-There is no build step, no framework, and no account setup. It is just a static page you can keep open on a laptop or second monitor during a work session.
+There is no build step, no framework, and no server requirement for normal use.
 
 ## Features
 
-- `25 min` and `50 min` timer modes with start, pause, and reset controls
-- End-of-session alarm generated with the Web Audio API
-- Warning state during the last 10% of a session and pulsing when time reaches zero
-- Analog clock with a live wedge showing how much of the next hour your remaining session occupies
-- Three interval gauges running on a repeating 90-second cycle with optional bell chimes
-- Draggable timer, clock, and interval panels with snap-to-position behavior
-- Click-to-create sticky notes that can be moved, resized, edited, and dismissed
-- Random fullscreen background images with left/right arrow navigation
-- Fullscreen toggle for distraction-free use
-- Persistent timer state, panel positions, bell preference, and sticky notes via `localStorage`
+- Two timer presets with configurable durations from `1` to `120` minutes
+- `Start`, `Pause`, and `Reset` controls with progress restored after reload
+- Visual warning state during the last `10%` of a session and a completion alarm via the Web Audio API
+- Analog clock rendered on `<canvas>`, including a progress wedge while the timer is running
+- Three configurable interval gauges based on a repeating wall-clock cycle
+- Bell toggle for interval alerts, saved between sessions
+- Draggable timer, clock, and interval panels with saved positions
+- Built-in background image gallery plus local image uploads from the settings panel
+- Sticky notes that can be created, edited, dragged, resized, closed, and merged by dropping one note onto another
+- Selectable sticky-note font from several monospace stacks
+- Fullscreen toggle and background navigation with the left and right arrow keys
 
 ## Getting Started
 
 1. Clone or download this repository.
-2. Open `index.html` in any modern browser.
+2. Open `index.html` in a modern desktop browser.
 
-That is the entire setup.
+That is the full setup.
 
 ## How To Use
 
-1. Pick `25 min` or `50 min`.
-2. Press `Start` to begin the session.
-3. Drag the timer, clock, or interval panel to the part of the screen you prefer.
-4. Click anywhere on the background to create a sticky note.
-5. Use the bell button on the interval panel to mute or enable interval chimes.
-6. Press the fullscreen button in the top-right corner when you want a cleaner display.
+1. Choose one of the two timer buttons and press `Start`.
+2. Drag the timer, analog clock, or interval panel wherever you want on screen.
+3. Open `Settings` to change timer lengths, interval lengths, sticky-note font, or manage uploaded background photos.
+4. Click empty background space to create a sticky note.
+5. Use the bell button on the interval panel to enable or disable interval alerts.
+6. Use the fullscreen button in the top-right corner for a cleaner display.
 
 ## Keyboard Shortcuts
 
@@ -40,17 +41,38 @@ That is the entire setup.
 | `Left Arrow` | Previous background image |
 | `Right Arrow` | Next background image |
 
+## Persistence
+
+The app stores its state in `localStorage`, including:
+
+- timer state
+- draggable panel positions
+- bell preference
+- sticky notes
+- settings values
+- uploaded background images
+
+All data stays in the current browser profile on the current machine.
+
+## Notes And Limitations
+
+- Uploaded photos are stored in browser storage, so large or numerous images can hit `localStorage` quota limits.
+- The app is optimized for mouse-driven desktop use; drag interactions are not implemented with touch-specific handlers.
+- Uploaded images and notes are local only. There is no sync, export, or account system.
+- The interval bell toggle currently also blanks the gauge progress display instead of muting sound only.
+
 ## Project Structure
 
-- `index.html` contains the full app markup and JavaScript behavior
-- `site.css` contains the visual styling and layout rules
+- `index.html` contains the app markup and all JavaScript behavior
+- `site.css` contains layout, styling, and note/settings visuals
 - `images/` contains the bundled background artwork
 
 ## Customization
 
-- Update the `IMAGES` array in `index.html` to use your own backgrounds
-- Adjust `INTERVAL_DURATION` and `INTERVAL_COUNT` in `index.html` to change the interval cycle
-- Edit `site.css` to change typography, spacing, overlays, note styling, and overall look
+- Use the in-app `Settings` panel for most day-to-day customization
+- Replace or add files in `images/` if you want different bundled backgrounds
+- Edit `site.css` to change typography, layout, glassmorphism, and sticky-note styling
+- Edit the inline script in `index.html` if you want to change app behavior
 
 ## Browser Requirements
 
@@ -60,8 +82,9 @@ Use a modern browser with support for:
 - `<canvas>`
 - the Fullscreen API
 - the Web Audio API
+- `FileReader`
 
-The included background images are `.webp` files, so if you replace them for older browsers you may prefer different formats.
+The bundled backgrounds use `.webp`, and uploaded images are re-encoded to JPEG before being saved locally.
 
 ## License
 
