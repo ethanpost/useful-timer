@@ -33,14 +33,89 @@
     </div>
   </div>
 
-  <div class="note-spawn-layer" id="noteSpawnLayer" title="Click to add a sticky note"></div>
+  <button class="settings-btn" id="settingsBtn" title="Settings">
+    <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5Zm7.43-2.53a7.04 7.04 0 0 0 .07-.97 7.04 7.04 0 0 0-.07-.97l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.3 7.3 0 0 0-1.67-.97l-.38-2.65A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65a7.3 7.3 0 0 0-1.67.97l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64L4.57 11a7.04 7.04 0 0 0-.07.97 7.04 7.04 0 0 0 .07.97l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .61.22l2.49-1a7.3 7.3 0 0 0 1.67.97l.38 2.65A.49.49 0 0 0 10 22h4a.49.49 0 0 0 .49-.42l.38-2.65a7.3 7.3 0 0 0 1.67-.97l2.49 1a.5.5 0 0 0 .61-.22l2-3.46a.49.49 0 0 0-.12-.64Z"/></svg>
+  </button>
+
+  <div class="settings-backdrop" id="settingsBackdrop"></div>
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-panel__header">
+      <span>Settings</span>
+      <button class="settings-panel__close" id="settingsClose">&times;</button>
+    </div>
+    <div class="settings-panel__body">
+      <fieldset class="settings-group">
+        <legend>Timer Durations (minutes)</legend>
+        <div class="settings-row">
+          <label for="setTimer1">Timer 1</label>
+          <input type="number" id="setTimer1" min="1" max="120" value="25">
+        </div>
+        <div class="settings-row">
+          <label for="setTimer2">Timer 2</label>
+          <input type="number" id="setTimer2" min="1" max="120" value="50">
+        </div>
+      </fieldset>
+      <fieldset class="settings-group">
+        <legend>Interval Durations (seconds)</legend>
+        <div class="settings-row">
+          <label for="setInt1">Interval 1</label>
+          <input type="number" id="setInt1" min="5" max="600" value="30">
+        </div>
+        <div class="settings-row">
+          <label for="setInt2">Interval 2</label>
+          <input type="number" id="setInt2" min="5" max="600" value="30">
+        </div>
+        <div class="settings-row">
+          <label for="setInt3">Interval 3</label>
+          <input type="number" id="setInt3" min="5" max="600" value="30">
+        </div>
+      </fieldset>
+      <fieldset class="settings-group">
+        <legend>Background Photos</legend>
+        <input type="file" id="photoUpload" accept="image/*" style="display:none">
+        <div class="settings-upload-row">
+          <button type="button" class="settings-upload-label" id="uploadLabel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add photo
+          </button>
+        </div>
+        <div class="settings-upload-status" id="uploadStatus" aria-live="polite"></div>
+        <div class="settings-thumbs" id="userPhotoThumbs"></div>
+      </fieldset>
+      <fieldset class="settings-group">
+        <legend>Sticky Notes</legend>
+        <div class="settings-row">
+          <label for="setNoteFont">Font</label>
+          <select id="setNoteFont">
+            <option value="jetbrains">JetBrains Mono</option>
+            <option value="fira">Fira Code</option>
+            <option value="cascadia">Cascadia Code</option>
+            <option value="source">Source Code Pro</option>
+            <option value="ibmplex">IBM Plex Mono</option>
+            <option value="iosevka">Iosevka</option>
+            <option value="hack">Hack</option>
+            <option value="ubuntu">Ubuntu Mono</option>
+            <option value="inconsolata">Inconsolata</option>
+            <option value="space">Space Mono</option>
+            <option value="victor">Victor Mono</option>
+            <option value="anonymous">Anonymous Pro</option>
+            <option value="consolas">Consolas</option>
+            <option value="menlo">Menlo</option>
+            <option value="monaco">Monaco</option>
+            <option value="courier">Courier New</option>
+          </select>
+        </div>
+      </fieldset>
+      <button class="settings-save" id="settingsSave">Save</button>
+    </div>
+  </div>
+
+  <div class="note-spawn-layer" id="noteSpawnLayer"></div>
   <div id="stickyNotesRoot" class="sticky-notes-root"></div>
 
   <div class="interval-overlay" id="intervalOverlay">
-    <div class="interval-header">
-      <button id="bellToggle" class="bell-btn active" title="Toggle bell"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
-    </div>
     <div class="gauge-row">
+      <button id="bellToggle" class="bell-btn active" title="Toggle bell"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
       <canvas id="gauge1" class="gauge-canvas" width="120" height="120"></canvas>
       <canvas id="gauge2" class="gauge-canvas" width="120" height="120"></canvas>
       <canvas id="gauge3" class="gauge-canvas" width="120" height="120"></canvas>
@@ -48,12 +123,73 @@
   </div>
 
   <script>
-    const IMAGES = [
+    const BASE_IMAGES = [
       'images/paulrousso_human_kindness_is_overflowing_and_I_think_its_going__d28b94bd-65a3-45e2-972b-bc689bf0f591.webp',
       'images/paulrousso_human_kindness_is_overflowing_and_I_think_its_going__6b8dc34d-329e-47ad-aa9b-124c2428ec3f.webp',
       'images/paulrousso_beautiful_farmland_with_pond_painted_in_a_norman_roc_c823e224-f60c-4c01-82b6-ee8175e35897.webp',
       'images/tiktik8644_cinematic_sci-fi_movie._A_narrow_corridor_in_an_indu_e1b3b0ea-8620-4c40-901d-69cf12b35197.webp'
     ];
+
+    const USER_IMAGES_KEY = 'pomodoro_user_images';
+
+    function loadUserImages() {
+      const raw = localStorage.getItem(USER_IMAGES_KEY);
+      if (!raw) return [];
+      try { const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; } catch { return []; }
+    }
+
+    function saveUserImages(arr) {
+      localStorage.setItem(USER_IMAGES_KEY, JSON.stringify(arr));
+    }
+
+    let userImages = loadUserImages();
+    let IMAGES = BASE_IMAGES.concat(userImages);
+
+    const SETTINGS_KEY = 'pomodoro_settings';
+    const NOTE_FONT_KEY_DEFAULT = 'jetbrains';
+    const NOTE_FONT_STACKS = {
+      jetbrains: '"JetBrains Mono", "Cascadia Mono", "Fira Code", Menlo, Consolas, "Liberation Mono", monospace',
+      fira: '"Fira Code", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      cascadia: '"Cascadia Code", "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      source: '"Source Code Pro", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      ibmplex: '"IBM Plex Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      iosevka: '"Iosevka", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      hack: '"Hack", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      ubuntu: '"Ubuntu Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      inconsolata: '"Inconsolata", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      space: '"Space Mono", "IBM Plex Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      victor: '"Victor Mono", "Fira Code", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      anonymous: '"Anonymous Pro", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace',
+      consolas: 'Consolas, "Cascadia Mono", "JetBrains Mono", Menlo, "Liberation Mono", monospace',
+      menlo: 'Menlo, "Cascadia Mono", "JetBrains Mono", Consolas, "Liberation Mono", monospace',
+      monaco: 'Monaco, Menlo, "Cascadia Mono", "JetBrains Mono", Consolas, "Liberation Mono", monospace',
+      courier: '"Courier New", Courier, "Liberation Mono", monospace'
+    };
+    const DEFAULT_SETTINGS = { timer1: 25, timer2: 50, int1: 30, int2: 30, int3: 30, noteFont: NOTE_FONT_KEY_DEFAULT };
+
+    function loadSettings() {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return { ...DEFAULT_SETTINGS };
+      try { return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }; } catch { return { ...DEFAULT_SETTINGS }; }
+    }
+
+    function saveSettings(s) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+    }
+
+    let settings = loadSettings();
+
+    function getResolvedNoteFontKey(fontKey) {
+      return NOTE_FONT_STACKS[fontKey] ? fontKey : NOTE_FONT_KEY_DEFAULT;
+    }
+
+    function applyStickyFontSetting() {
+      const resolvedKey = getResolvedNoteFontKey(settings.noteFont);
+      settings.noteFont = resolvedKey;
+      document.documentElement.style.setProperty('--sticky-note-font', NOTE_FONT_STACKS[resolvedKey]);
+    }
+
+    applyStickyFontSetting();
 
     const KEY = 'pomodoro_state';
     const display = document.getElementById('display');
@@ -62,7 +198,7 @@
     const btn25 = document.getElementById('btn25');
     const btn50 = document.getElementById('btn50');
 
-    let totalSeconds = 25 * 60;
+    let totalSeconds = settings.timer1 * 60;
     let remainingSeconds = totalSeconds;
     let running = false;
     let intervalId = null;
@@ -71,6 +207,11 @@
     let audioCtx = null;
 
     function showImage(idx) {
+      if (!IMAGES.length) {
+        document.getElementById('bg').src = '';
+        currentImageIdx = 0;
+        return;
+      }
       currentImageIdx = ((idx % IMAGES.length) + IMAGES.length) % IMAGES.length;
       document.getElementById('bg').src = IMAGES[currentImageIdx];
     }
@@ -123,10 +264,18 @@
       display.classList.toggle('done', remainingSeconds === 0 && running);
     }
 
+    function applyTimerLabels() {
+      btn25.textContent = settings.timer1 + ' min';
+      btn25.dataset.minutes = settings.timer1;
+      btn50.textContent = settings.timer2 + ' min';
+      btn50.dataset.minutes = settings.timer2;
+    }
+    applyTimerLabels();
+
     function updateDurationButtons() {
-      const isMode25 = totalSeconds === 25 * 60;
-      btn25.classList.toggle('active', isMode25);
-      btn50.classList.toggle('active', !isMode25);
+      const isMode1 = totalSeconds === settings.timer1 * 60;
+      btn25.classList.toggle('active', isMode1);
+      btn50.classList.toggle('active', !isMode1);
     }
 
     let buzzerNodes = null;
@@ -229,8 +378,8 @@
     });
 
     resetBtn.addEventListener('click', resetTimer);
-    btn25.addEventListener('click', () => setDuration(25));
-    btn50.addEventListener('click', () => setDuration(50));
+    btn25.addEventListener('click', () => setDuration(settings.timer1));
+    btn50.addEventListener('click', () => setDuration(settings.timer2));
 
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const fsIcon = document.getElementById('fsIcon');
@@ -528,7 +677,7 @@
       body.className = 'sticky-note__body';
       const ta = document.createElement('textarea');
       ta.className = 'sticky-note__textarea';
-      ta.placeholder = 'Jot something down\u2026';
+      ta.placeholder = '';
       ta.value = data.text || '';
       const resize = document.createElement('div');
       resize.className = 'sticky-note__resize';
@@ -687,9 +836,9 @@
       ctx.fill();
     }
 
-    const INTERVAL_DURATION = 30;
     const INTERVAL_COUNT = 3;
-    const CYCLE_DURATION = INTERVAL_DURATION * INTERVAL_COUNT;
+    let intervalDurations = [settings.int1, settings.int2, settings.int3];
+    let cycleDuration = intervalDurations.reduce((a, b) => a + b, 0);
     const gaugeCanvases = [
       document.getElementById('gauge1'),
       document.getElementById('gauge2'),
@@ -782,6 +931,15 @@
 
     let prevCycleElapsed = null;
 
+    function getIntervalSlot(elapsed) {
+      let cumulative = 0;
+      for (let i = 0; i < INTERVAL_COUNT; i++) {
+        cumulative += intervalDurations[i];
+        if (elapsed < cumulative) return i;
+      }
+      return INTERVAL_COUNT - 1;
+    }
+
     function updateIntervalBars() {
       if (!bellEnabled) {
         for (let i = 0; i < INTERVAL_COUNT; i++) {
@@ -793,28 +951,30 @@
 
       const now = new Date();
       const totalSec = now.getMinutes() * 60 + now.getSeconds();
-      const cycleElapsed = totalSec % CYCLE_DURATION;
+      const cycleElapsed = totalSec % cycleDuration;
 
+      let barStart = 0;
       for (let i = 0; i < INTERVAL_COUNT; i++) {
-        const barStart = i * INTERVAL_DURATION;
+        const dur = intervalDurations[i];
         const barElapsed = cycleElapsed - barStart;
         let fraction, seconds;
-        if (barElapsed >= INTERVAL_DURATION) {
+        if (barElapsed >= dur) {
           fraction = 1;
-          seconds = INTERVAL_DURATION;
+          seconds = dur;
         } else if (barElapsed > 0) {
-          fraction = barElapsed / INTERVAL_DURATION;
+          fraction = barElapsed / dur;
           seconds = barElapsed;
         } else {
           fraction = 0;
           seconds = 0;
         }
         drawGauge(gaugeCtxs[i], String(i + 1), fraction, seconds);
+        barStart += dur;
       }
 
       if (prevCycleElapsed !== null) {
-        const prevSlot = Math.floor(prevCycleElapsed / INTERVAL_DURATION);
-        const currSlot = Math.floor(cycleElapsed / INTERVAL_DURATION);
+        const prevSlot = getIntervalSlot(prevCycleElapsed);
+        const currSlot = getIntervalSlot(cycleElapsed);
         if (currSlot !== prevSlot || cycleElapsed < prevCycleElapsed) {
           playBell();
         }
@@ -838,6 +998,174 @@
         intervalId = setInterval(tick, 1000);
       }
     }
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const settingsBackdrop = document.getElementById('settingsBackdrop');
+    const settingsClose = document.getElementById('settingsClose');
+    const settingsSave = document.getElementById('settingsSave');
+
+    function openSettings() {
+      document.getElementById('setTimer1').value = settings.timer1;
+      document.getElementById('setTimer2').value = settings.timer2;
+      document.getElementById('setInt1').value = settings.int1;
+      document.getElementById('setInt2').value = settings.int2;
+      document.getElementById('setInt3').value = settings.int3;
+      document.getElementById('setNoteFont').value = getResolvedNoteFontKey(settings.noteFont);
+      renderUserThumbs();
+      settingsPanel.classList.add('open');
+      settingsBackdrop.classList.add('open');
+    }
+
+    function closeSettings() {
+      settingsPanel.classList.remove('open');
+      settingsBackdrop.classList.remove('open');
+    }
+
+    const photoUpload = document.getElementById('photoUpload');
+    const userPhotoThumbs = document.getElementById('userPhotoThumbs');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    function renderUserThumbs() {
+      userPhotoThumbs.innerHTML = '';
+      userImages.forEach((dataUrl, idx) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'settings-thumb';
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        const del = document.createElement('button');
+        del.className = 'settings-thumb__del';
+        del.type = 'button';
+        del.textContent = '\u00D7';
+        del.addEventListener('click', () => {
+          const nextImages = userImages.filter((_, imageIdx) => imageIdx !== idx);
+          try {
+            saveUserImages(nextImages);
+            userImages = nextImages;
+            IMAGES = BASE_IMAGES.concat(userImages);
+            currentImageIdx = Math.min(currentImageIdx, IMAGES.length - 1);
+            showImage(currentImageIdx);
+            setUploadStatus('');
+            renderUserThumbs();
+          } catch {
+            setUploadStatus('Could not remove photo. Browser storage is unavailable.', 'error');
+          }
+        });
+        wrap.appendChild(img);
+        wrap.appendChild(del);
+        userPhotoThumbs.appendChild(wrap);
+      });
+    }
+
+    let lastUploadedIdx = -1;
+    let uploadBusy = false;
+
+    function setUploadStatus(message, state = '') {
+      uploadStatus.textContent = message || '';
+      uploadStatus.dataset.state = state;
+    }
+
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Could not read that file. Try a different image.'));
+        reader.onabort = () => reject(new Error('Upload was cancelled before completion.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImage(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error('That file is not a supported image format.'));
+        img.src = dataUrl;
+      });
+    }
+
+    function optimizeImageDataUrl(img) {
+      const maxEdge = 1920;
+      const sourceMax = Math.max(img.width, img.height) || 1;
+      const scale = Math.min(1, maxEdge / sourceMax);
+      const targetW = Math.max(1, Math.round(img.width * scale));
+      const targetH = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+      return canvas.toDataURL('image/jpeg', 0.88);
+    }
+
+    document.getElementById('uploadLabel').addEventListener('click', () => {
+      photoUpload.click();
+    });
+
+    photoUpload.addEventListener('change', async () => {
+      const file = photoUpload.files && photoUpload.files[0];
+      photoUpload.value = '';
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        setUploadStatus('Please choose an image file.', 'error');
+        return;
+      }
+      if (uploadBusy) return;
+      uploadBusy = true;
+      setUploadStatus('Processing photo...', 'working');
+      try {
+        const rawDataUrl = await readFileAsDataURL(file);
+        const image = await loadImage(rawDataUrl);
+        const optimizedDataUrl = optimizeImageDataUrl(image);
+        const nextImages = userImages.concat(optimizedDataUrl);
+        saveUserImages(nextImages);
+        userImages = nextImages;
+        IMAGES = BASE_IMAGES.concat(userImages);
+        lastUploadedIdx = IMAGES.length - 1;
+        showImage(lastUploadedIdx);
+        renderUserThumbs();
+        setUploadStatus('');
+      } catch (err) {
+        const quotaHit = err && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+        if (quotaHit) {
+          setUploadStatus('Storage is full. Remove an existing photo and try again.', 'error');
+        } else {
+          const message = err && err.message ? err.message : 'Upload failed. Try a smaller image.';
+          setUploadStatus(message, 'error');
+        }
+      } finally {
+        uploadBusy = false;
+      }
+    });
+
+    settingsBtn.addEventListener('click', openSettings);
+    settingsClose.addEventListener('click', closeSettings);
+    settingsBackdrop.addEventListener('click', closeSettings);
+
+    settingsSave.addEventListener('click', () => {
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(v)));
+      settings.timer1 = clamp(+document.getElementById('setTimer1').value, 1, 120);
+      settings.timer2 = clamp(+document.getElementById('setTimer2').value, 1, 120);
+      settings.int1 = clamp(+document.getElementById('setInt1').value, 5, 600);
+      settings.int2 = clamp(+document.getElementById('setInt2').value, 5, 600);
+      settings.int3 = clamp(+document.getElementById('setInt3').value, 5, 600);
+      settings.noteFont = getResolvedNoteFontKey(document.getElementById('setNoteFont').value);
+      saveSettings(settings);
+
+      applyTimerLabels();
+      applyStickyFontSetting();
+      intervalDurations = [settings.int1, settings.int2, settings.int3];
+      cycleDuration = intervalDurations.reduce((a, b) => a + b, 0);
+      prevCycleElapsed = null;
+
+      if (lastUploadedIdx >= 0) {
+        showImage(lastUploadedIdx);
+        lastUploadedIdx = -1;
+      }
+
+      resetTimer();
+      closeSettings();
+    });
   </script>
 
 </body>
