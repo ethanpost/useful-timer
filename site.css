@@ -9,6 +9,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overscroll-behavior: none;
 }
 
 body {
@@ -39,7 +40,9 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  max-width: 96vw;
   cursor: grab;
+  touch-action: none;
 }
 
 .timer-overlay.dragging {
@@ -56,6 +59,8 @@ body {
   letter-spacing: 0.04em;
   user-select: none;
   line-height: 1;
+  text-align: center;
+  max-width: 100%;
 }
 
 .timer-display.warning {
@@ -128,6 +133,7 @@ body {
   border-radius: 14px;
   backdrop-filter: blur(8px);
   cursor: grab;
+  touch-action: none;
 }
 
 .interval-overlay.dragging {
@@ -180,6 +186,7 @@ body {
   z-index: 20;
   border-radius: 50%;
   cursor: grab;
+  touch-action: none;
 }
 
 .analog-clock.dragging {
@@ -189,8 +196,8 @@ body {
 
 .fullscreen-btn {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: calc(16px + env(safe-area-inset-top));
+  right: calc(16px + env(safe-area-inset-right));
   z-index: 20;
   width: 44px;
   height: 44px;
@@ -227,8 +234,8 @@ body {
 
 .settings-btn {
   position: fixed;
-  bottom: 16px;
-  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: calc(16px + env(safe-area-inset-left));
   z-index: 30;
   width: 40px;
   height: 40px;
@@ -599,6 +606,7 @@ body {
   background: rgba(255, 255, 255, 0.06);
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 
 .sticky-note__stamp {
@@ -670,5 +678,79 @@ body {
   width: 18px;
   height: 18px;
   cursor: se-resize;
+  touch-action: none;
   background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0.35) 55%, transparent 55%);
+}
+
+@media (max-width: 768px) {
+  .timer-display {
+    font-size: clamp(2.3rem, 13vw, 3.6rem);
+    letter-spacing: 0.02em;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: min(94vw, 360px);
+    max-width: 100%;
+  }
+
+  .controls button {
+    min-height: 44px;
+    min-width: 0;
+    padding: 10px 12px;
+    flex: 1 1 calc(50% - 4px);
+  }
+
+  .controls button.reset-btn {
+    flex-basis: 100%;
+  }
+
+  .gauge-row {
+    gap: 6px;
+  }
+
+  .gauge-canvas {
+    width: 84px;
+    height: 84px;
+  }
+
+  .settings-panel {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(72vh, 560px);
+  }
+}
+
+@media (max-width: 932px) and (orientation: landscape) {
+  .timer-overlay {
+    gap: 10px;
+  }
+
+  .timer-display {
+    font-size: clamp(2rem, 8.5vh, 3rem);
+  }
+
+  .controls {
+    width: min(92vw, 560px);
+    gap: 6px;
+  }
+
+  .controls button {
+    min-height: 40px;
+    padding: 8px 10px;
+    flex: 1 1 calc(25% - 5px);
+  }
+
+  .controls button.reset-btn {
+    flex-basis: calc(25% - 5px);
+  }
+
+  .gauge-canvas {
+    width: 72px;
+    height: 72px;
+  }
 }
