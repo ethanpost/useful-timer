@@ -9,6 +9,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overscroll-behavior: none;
 }
 
 body {
@@ -40,6 +41,7 @@ body {
   align-items: center;
   gap: 16px;
   cursor: grab;
+  touch-action: none;
 }
 
 .timer-overlay.dragging {
@@ -128,6 +130,7 @@ body {
   border-radius: 14px;
   backdrop-filter: blur(8px);
   cursor: grab;
+  touch-action: none;
 }
 
 .interval-overlay.dragging {
@@ -180,6 +183,7 @@ body {
   z-index: 20;
   border-radius: 50%;
   cursor: grab;
+  touch-action: none;
 }
 
 .analog-clock.dragging {
@@ -189,8 +193,8 @@ body {
 
 .fullscreen-btn {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: calc(16px + env(safe-area-inset-top));
+  right: calc(16px + env(safe-area-inset-right));
   z-index: 20;
   width: 44px;
   height: 44px;
@@ -227,8 +231,8 @@ body {
 
 .settings-btn {
   position: fixed;
-  bottom: 16px;
-  left: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: calc(16px + env(safe-area-inset-left));
   z-index: 30;
   width: 40px;
   height: 40px;
@@ -599,6 +603,7 @@ body {
   background: rgba(255, 255, 255, 0.06);
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 
 .sticky-note__stamp {
@@ -670,5 +675,46 @@ body {
   width: 18px;
   height: 18px;
   cursor: se-resize;
+  touch-action: none;
   background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0.35) 55%, transparent 55%);
+}
+
+@media (max-width: 768px) {
+  .timer-display {
+    font-size: clamp(2.6rem, 14vw, 4rem);
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: min(96vw, 420px);
+  }
+
+  .controls button {
+    min-height: 44px;
+    padding: 10px 16px;
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .controls button.reset-btn {
+    flex-basis: 100%;
+  }
+
+  .gauge-row {
+    gap: 6px;
+  }
+
+  .gauge-canvas {
+    width: 84px;
+    height: 84px;
+  }
+
+  .settings-panel {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(72vh, 560px);
+  }
 }
