@@ -471,7 +471,7 @@
     function makeDraggable(el, id) {
       let offsetX, offsetY, isDragging = false;
 
-      el.addEventListener('mousedown', (e) => {
+      el.addEventListener('pointerdown', (e) => {
         if (e.target.tagName === 'BUTTON') return;
         e.preventDefault();
         const rect = el.getBoundingClientRect();
@@ -479,14 +479,15 @@
         offsetY = e.clientY - rect.top;
         isDragging = true;
         el.classList.add('dragging');
+        el.setPointerCapture(e.pointerId);
       });
 
-      document.addEventListener('mousemove', (e) => {
+      document.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
         applyPosition(el, e.clientX - offsetX, e.clientY - offsetY);
       });
 
-      document.addEventListener('mouseup', (e) => {
+      document.addEventListener('pointerup', (e) => {
         if (!isDragging) return;
         isDragging = false;
         el.classList.remove('dragging');
@@ -583,7 +584,7 @@
       );
     }
 
-    document.addEventListener('mousemove', (e) => {
+    document.addEventListener('pointermove', (e) => {
       if (stickyDrag) {
         const { note, offX, offY } = stickyDrag;
         const vw = window.innerWidth;
@@ -615,7 +616,7 @@
       }
     });
 
-    document.addEventListener('mouseup', (e) => {
+    document.addEventListener('pointerup', (e) => {
       if (stickyDrag) {
         const draggedNote = stickyDrag.note;
         draggedNote.classList.remove('dragging');
@@ -698,7 +699,7 @@
 
       ta.addEventListener('input', scheduleStickySave);
 
-      header.addEventListener('mousedown', (e) => {
+      header.addEventListener('pointerdown', (e) => {
         if (e.target === closeBtn) return;
         e.preventDefault();
         stickyResize = null;
@@ -709,9 +710,10 @@
           offY: e.clientY - rect.top
         };
         note.classList.add('dragging');
+        header.setPointerCapture(e.pointerId);
       });
 
-      resize.addEventListener('mousedown', (e) => {
+      resize.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         e.stopPropagation();
         stickyDrag = null;
@@ -723,6 +725,7 @@
           startH: note.offsetHeight
         };
         note.classList.add('dragging');
+        resize.setPointerCapture(e.pointerId);
       });
 
       return note;
