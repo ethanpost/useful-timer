@@ -418,32 +418,29 @@
 
     const POSITIONS_KEY = 'pomodoro_positions';
     const MARGIN = 24;
+    const DRAGGABLE_SNAP_STEP = 20;
+    const STICKY_SNAP_STEP = 8;
 
-    function getSnapPoints(elW, elH) {
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      return [
-        { x: MARGIN,                    y: MARGIN,                     label: 'top-left' },
-        { x: (vw - elW) / 2,            y: MARGIN,                     label: 'top-center' },
-        { x: vw - elW - MARGIN,         y: MARGIN,                     label: 'top-right' },
-        { x: MARGIN,                    y: (vh - elH) / 2,             label: 'mid-left' },
-        { x: (vw - elW) / 2,            y: (vh - elH) / 2,             label: 'center' },
-        { x: vw - elW - MARGIN,         y: (vh - elH) / 2,             label: 'mid-right' },
-        { x: MARGIN,                    y: vh - elH - MARGIN,           label: 'bot-left' },
-        { x: (vw - elW) / 2,            y: vh - elH - MARGIN,           label: 'bot-center' },
-        { x: vw - elW - MARGIN,         y: vh - elH - MARGIN,           label: 'bot-right' },
-      ];
+    function snapCoordToGrid(value, min, max, step) {
+      if (max < min) return min;
+      const v = Math.max(min, Math.min(value, max));
+      if (step <= 0) return v;
+      const snapped = min + Math.round((v - min) / step) * step;
+      return Math.max(min, Math.min(snapped, max));
     }
 
     function snapTo(el, x, y) {
       const rect = el.getBoundingClientRect();
-      const points = getSnapPoints(rect.width, rect.height);
-      let best = points[0], bestDist = Infinity;
-      for (const p of points) {
-        const d = Math.hypot(x - p.x, y - p.y);
-        if (d < bestDist) { bestDist = d; best = p; }
-      }
-      return best;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const elW = rect.width;
+      const elH = rect.height;
+      const maxX = vw - elW - MARGIN;
+      const maxY = vh - elH - MARGIN;
+      return {
+        x: snapCoordToGrid(x, MARGIN, maxX, DRAGGABLE_SNAP_STEP),
+        y: snapCoordToGrid(y, MARGIN, maxY, DRAGGABLE_SNAP_STEP)
+      };
     }
 
     function applyPosition(el, x, y) {
@@ -640,13 +637,37 @@
           }
 
           draggedNote.remove();
+        } else {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const w = draggedNote.offsetWidth;
+          const h = draggedNote.offsetHeight;
+          let nx = parseFloat(draggedNote.style.left) || 0;
+          let ny = parseFloat(draggedNote.style.top) || 0;
+          const maxX = Math.max(0, vw - w);
+          const maxY = Math.max(0, vh - h);
+          nx = snapCoordToGrid(nx, 0, maxX, STICKY_SNAP_STEP);
+          ny = snapCoordToGrid(ny, 0, maxY, STICKY_SNAP_STEP);
+          draggedNote.style.left = nx + 'px';
+          draggedNote.style.top = ny + 'px';
         }
 
         stickyDrag = null;
         saveStickyNotesNow();
       }
       if (stickyResize) {
-        stickyResize.note.classList.remove('dragging');
+        const note = stickyResize.note;
+        note.classList.remove('dragging');
+        const minW = 160;
+        const minH = 120;
+        const maxW = Math.min(window.innerWidth * 0.9, 560);
+        const maxH = Math.min(window.innerHeight * 0.85, 480);
+        let w = note.offsetWidth;
+        let h = note.offsetHeight;
+        w = snapCoordToGrid(w, minW, maxW, STICKY_SNAP_STEP);
+        h = snapCoordToGrid(h, minH, maxH, STICKY_SNAP_STEP);
+        note.style.width = w + 'px';
+        note.style.height = h + 'px';
         stickyResize = null;
         saveStickyNotesNow();
       }
@@ -749,8 +770,11 @@
       let y = e.clientY - 24;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      x = Math.max(8, Math.min(x, vw - w - 8));
-      y = Math.max(8, Math.min(y, vh - h - 8));
+      const inset = 8;
+      x = Math.max(inset, Math.min(x, vw - w - inset));
+      y = Math.max(inset, Math.min(y, vh - h - inset));
+      x = snapCoordToGrid(x, inset, vw - w - inset, STICKY_SNAP_STEP);
+      y = snapCoordToGrid(y, inset, vh - h - inset, STICKY_SNAP_STEP);
       mountStickyNote({ x, y, w, h, text: '' });
       saveStickyNotesNow();
     });
