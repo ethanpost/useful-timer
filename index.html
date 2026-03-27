@@ -106,6 +106,24 @@
           </select>
         </div>
       </fieldset>
+      <fieldset class="settings-group">
+        <legend>Backup &amp; Restore</legend>
+        <input type="file" id="restoreFileInput" accept=".json" style="display:none">
+        <div class="settings-backup-row">
+          <button type="button" class="settings-backup-btn" id="backupFolderBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span id="backupFolderLabel">Choose backup folder</span>
+          </button>
+        </div>
+        <div class="settings-backup-folder" id="backupFolderName"></div>
+        <div class="settings-backup-row" style="margin-top:4px">
+          <button type="button" class="settings-backup-btn" id="restoreBtn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            Restore from backup
+          </button>
+        </div>
+        <div class="settings-backup-status" id="backupStatus"></div>
+      </fieldset>
       <button class="settings-save" id="settingsSave">Save</button>
     </div>
   </div>
@@ -188,6 +206,171 @@
     function saveSettings(s) {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
     }
+
+    // ── Backup & Restore ──
+
+    const BACKUP_FILENAME = 'useful-timer-backup.json';
+    const BACKUP_LS_KEYS = [
+      'pomodoro_settings', 'pomodoro_sticky_notes', 'timeline_notes',
+      'pomodoro_user_images', 'pomodoro_state', 'pomodoro_positions',
+      'pomodoro_bell', 'timeline_pos_y'
+    ];
+    const BACKUP_JSON_KEYS = [
+      'pomodoro_settings', 'pomodoro_sticky_notes', 'timeline_notes',
+      'pomodoro_user_images', 'pomodoro_state', 'pomodoro_positions'
+    ];
+    const hasNativeFSAccess = typeof window.showDirectoryPicker === 'function';
+
+    function openBackupDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('useful_timer_backup', 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore('handles');
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveDirectoryHandle(handle) {
+      const db = await openBackupDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(handle, 'backupDir');
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+    }
+
+    async function loadDirectoryHandle() {
+      try {
+        const db = await openBackupDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction('handles', 'readonly');
+          const req = tx.objectStore('handles').get('backupDir');
+          req.onsuccess = () => { db.close(); resolve(req.result || null); };
+          req.onerror = () => { db.close(); resolve(null); };
+        });
+      } catch { return null; }
+    }
+
+    async function clearDirectoryHandle() {
+      try {
+        const db = await openBackupDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction('handles', 'readwrite');
+          tx.objectStore('handles').delete('backupDir');
+          tx.oncomplete = () => { db.close(); resolve(); };
+          tx.onerror = () => { db.close(); resolve(); };
+        });
+      } catch { /* ignore */ }
+    }
+
+    function collectBackupData() {
+      const data = { version: 1, timestamp: new Date().toISOString() };
+      for (const key of BACKUP_LS_KEYS) {
+        const raw = localStorage.getItem(key);
+        if (raw === null) continue;
+        if (BACKUP_JSON_KEYS.includes(key)) {
+          try { data[key] = JSON.parse(raw); } catch { data[key] = raw; }
+        } else {
+          data[key] = raw;
+        }
+      }
+      return data;
+    }
+
+    async function performBackup(dirHandle) {
+      const data = collectBackupData();
+      const json = JSON.stringify(data, null, 2);
+      const fileHandle = await dirHandle.getFileHandle(BACKUP_FILENAME, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(json);
+      await writable.close();
+    }
+
+    function performRestore(jsonString) {
+      const data = JSON.parse(jsonString);
+      if (!data || typeof data !== 'object' || !data.version) {
+        throw new Error('Invalid backup file');
+      }
+      for (const key of BACKUP_LS_KEYS) {
+        if (!(key in data)) continue;
+        const val = data[key];
+        if (typeof val === 'string') {
+          localStorage.setItem(key, val);
+        } else {
+          localStorage.setItem(key, JSON.stringify(val));
+        }
+      }
+      location.reload();
+    }
+
+    function downloadBackupFallback() {
+      const data = collectBackupData();
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = BACKUP_FILENAME;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    }
+
+    function setBackupStatus(msg, state) {
+      const el = document.getElementById('backupStatus');
+      if (!el) return;
+      el.textContent = msg;
+      el.dataset.state = state || '';
+      if (state === 'success' || state === 'error') {
+        clearTimeout(el._timer);
+        el._timer = setTimeout(() => { el.textContent = ''; el.dataset.state = ''; }, 4000);
+      }
+    }
+
+    function updateFolderNameDisplay(name) {
+      const el = document.getElementById('backupFolderName');
+      const label = document.getElementById('backupFolderLabel');
+      if (el) el.textContent = name ? 'Folder: ' + name : '';
+      if (label) label.textContent = name ? 'Change backup folder' : 'Choose backup folder';
+    }
+
+    async function triggerAutoBackup() {
+      if (!hasNativeFSAccess) {
+        downloadBackupFallback();
+        setBackupStatus('Backup downloaded', 'success');
+        return;
+      }
+      try {
+        const handle = await loadDirectoryHandle();
+        if (!handle) return;
+        const perm = await handle.queryPermission({ mode: 'readwrite' });
+        if (perm !== 'granted') {
+          const req = await handle.requestPermission({ mode: 'readwrite' });
+          if (req !== 'granted') return;
+        }
+        await performBackup(handle);
+        setBackupStatus('Backup saved', 'success');
+      } catch {
+        setBackupStatus('Auto-backup failed', 'error');
+      }
+    }
+
+    async function initBackupUI() {
+      if (!hasNativeFSAccess) {
+        const label = document.getElementById('backupFolderLabel');
+        if (label) label.textContent = 'Download backup';
+        return;
+      }
+      try {
+        const handle = await loadDirectoryHandle();
+        if (handle) updateFolderNameDisplay(handle.name);
+      } catch { /* ignore */ }
+    }
+
+    initBackupUI();
 
     let settings = loadSettings();
 
@@ -1174,6 +1357,59 @@
     settingsClose.addEventListener('click', closeSettings);
     settingsBackdrop.addEventListener('click', closeSettings);
 
+    document.getElementById('backupFolderBtn').addEventListener('click', async () => {
+      if (!hasNativeFSAccess) {
+        downloadBackupFallback();
+        setBackupStatus('Backup downloaded', 'success');
+        return;
+      }
+      try {
+        const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        await saveDirectoryHandle(dirHandle);
+        updateFolderNameDisplay(dirHandle.name);
+        setBackupStatus('Saving backup…', '');
+        await performBackup(dirHandle);
+        setBackupStatus('Backup saved', 'success');
+      } catch (err) {
+        if (err.name !== 'AbortError') setBackupStatus('Could not set folder', 'error');
+      }
+    });
+
+    const restoreFileInput = document.getElementById('restoreFileInput');
+
+    document.getElementById('restoreBtn').addEventListener('click', async () => {
+      if (hasNativeFSAccess) {
+        try {
+          const handle = await loadDirectoryHandle();
+          if (handle) {
+            const perm = await handle.queryPermission({ mode: 'read' });
+            if (perm === 'granted' || (await handle.requestPermission({ mode: 'read' })) === 'granted') {
+              try {
+                const fileHandle = await handle.getFileHandle(BACKUP_FILENAME);
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                performRestore(text);
+                return;
+              } catch { /* file not found in folder, fall through to picker */ }
+            }
+          }
+        } catch { /* fall through */ }
+      }
+      restoreFileInput.click();
+    });
+
+    restoreFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        performRestore(text);
+      } catch (err) {
+        setBackupStatus('Restore failed: ' + err.message, 'error');
+      }
+      restoreFileInput.value = '';
+    });
+
     settingsSave.addEventListener('click', () => {
       const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(v)));
       settings.timer1 = clamp(+document.getElementById('setTimer1').value, 1, 120);
@@ -1197,6 +1433,7 @@
 
       resetTimer();
       closeSettings();
+      triggerAutoBackup();
     });
 
     // ── Timeline Calendar ──

@@ -530,6 +530,55 @@ body {
   opacity: 1;
 }
 
+.settings-backup-row {
+  display: flex;
+}
+
+.settings-backup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px dashed rgba(255,255,255,.25);
+  border-radius: 6px;
+  background: transparent;
+  color: rgba(255,255,255,.7);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+
+.settings-backup-btn:hover {
+  border-color: rgba(255,255,255,.5);
+  color: #fff;
+}
+
+.settings-backup-folder {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,.45);
+  min-height: 1em;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-backup-status {
+  min-height: 1.1em;
+  font-size: 0.74rem;
+  color: rgba(255,255,255,.6);
+  margin-top: 2px;
+}
+
+.settings-backup-status[data-state="success"] {
+  color: #89f7b3;
+}
+
+.settings-backup-status[data-state="error"] {
+  color: #ff8f8f;
+}
+
 .settings-save {
   padding: 9px 0;
   border: none;
