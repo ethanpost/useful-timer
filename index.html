@@ -122,6 +122,18 @@
     </div>
   </div>
 
+  <div class="timeline-strip" id="timelineStrip"></div>
+  <div class="timeline-tooltip" id="timelineTooltip"></div>
+  <div class="timeline-note-overlay" id="timelineNoteOverlay">
+    <div class="timeline-note-editor">
+      <div class="timeline-note-editor__header">
+        <span id="timelineNoteDate"></span>
+        <button class="timeline-note-editor__close" id="timelineNoteClose" type="button">&times;</button>
+      </div>
+      <textarea class="timeline-note-editor__textarea" id="timelineNoteTextarea" placeholder="Write a note..."></textarea>
+    </div>
+  </div>
+
   <script>
     const BASE_IMAGES = [
       'images/paulrousso_human_kindness_is_overflowing_and_I_think_its_going__d28b94bd-65a3-45e2-972b-bc689bf0f591.webp',
@@ -1185,6 +1197,233 @@
 
       resetTimer();
       closeSettings();
+    });
+
+    // ── Timeline Calendar ──
+
+    const TIMELINE_NOTES_KEY = 'timeline_notes';
+    const TL_MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const TL_DAY_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    let timelineNotes = {};
+    try {
+      const tlRaw = localStorage.getItem(TIMELINE_NOTES_KEY);
+      if (tlRaw) timelineNotes = JSON.parse(tlRaw) || {};
+    } catch { timelineNotes = {}; }
+
+    function saveTimelineNotes() {
+      localStorage.setItem(TIMELINE_NOTES_KEY, JSON.stringify(timelineNotes));
+    }
+
+    function dateToKey(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateDisplay(key) {
+      const p = key.split('-');
+      const d = new Date(+p[0], +p[1] - 1, +p[2]);
+      return TL_DAY_SHORT[d.getDay()] + ', ' + TL_MONTH_SHORT[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+    }
+
+    const tlStrip = document.getElementById('timelineStrip');
+    const tlTooltip = document.getElementById('timelineTooltip');
+    const tlNoteOverlay = document.getElementById('timelineNoteOverlay');
+    const tlNoteDateEl = document.getElementById('timelineNoteDate');
+    const tlNoteCloseBtn = document.getElementById('timelineNoteClose');
+    const tlNoteTextarea = document.getElementById('timelineNoteTextarea');
+
+    let tlActiveKey = null;
+
+    function renderTimeline() {
+      tlStrip.innerHTML = '';
+      tlTooltip.classList.remove('visible');
+
+      const blocksPerRow = Math.max(30, Math.floor(window.innerWidth / 44));
+      const totalBlocks = blocksPerRow * 2;
+      const pastBlocks = Math.round(totalBlocks * 0.15);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayKey = dateToKey(today);
+
+      const start = new Date(today);
+      start.setDate(start.getDate() - pastBlocks);
+
+      const entries = [];
+      for (let i = 0; i < totalBlocks; i++) {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        entries.push(d);
+      }
+
+      for (let r = 0; r < 2; r++) {
+        const rowDates = entries.slice(r * blocksPerRow, (r + 1) * blocksPerRow);
+        const rowEl = document.createElement('div');
+        rowEl.className = 'timeline-row';
+
+        const monthsEl = document.createElement('div');
+        monthsEl.className = 'timeline-months';
+        const blocksEl = document.createElement('div');
+        blocksEl.className = 'timeline-blocks';
+
+        let prevMonth = -1;
+
+        rowDates.forEach((d, idx) => {
+          const key = dateToKey(d);
+          const dow = d.getDay();
+          const isWeekend = dow === 0 || dow === 6;
+          const isToday = key === todayKey;
+          const noteText = timelineNotes[key];
+          const hasNote = !!(noteText && noteText.trim());
+
+          if (d.getMonth() !== prevMonth) {
+            const lbl = document.createElement('span');
+            lbl.className = 'timeline-month-label';
+            let labelText = TL_MONTH_SHORT[d.getMonth()];
+            if ((r === 0 && idx === 0) || d.getMonth() === 0) labelText += ' \u2019' + String(d.getFullYear()).slice(2);
+            lbl.textContent = labelText;
+            lbl.style.left = ((idx / rowDates.length) * 100) + '%';
+            monthsEl.appendChild(lbl);
+            prevMonth = d.getMonth();
+          }
+
+          const block = document.createElement('div');
+          block.className = 'timeline-block';
+          if (isWeekend) block.classList.add('timeline-block--weekend');
+          if (isToday) block.classList.add('timeline-block--today');
+          if (hasNote) block.classList.add('timeline-block--has-note');
+          block.textContent = d.getDate();
+          block.dataset.dateKey = key;
+
+          block.addEventListener('dblclick', () => openTimelineNote(key));
+
+          block.addEventListener('mouseenter', () => {
+            const text = timelineNotes[key];
+            if (!text || !text.trim()) return;
+            const preview = text.length > 200 ? text.slice(0, 200) + '\u2026' : text;
+            tlTooltip.textContent = preview;
+            const rect = block.getBoundingClientRect();
+            const maxLeft = window.innerWidth - 128;
+            tlTooltip.style.left = Math.max(128, Math.min(rect.left + rect.width / 2, maxLeft)) + 'px';
+            tlTooltip.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+            tlTooltip.style.transform = 'translateX(-50%)';
+            tlTooltip.classList.add('visible');
+          });
+
+          block.addEventListener('mouseleave', () => {
+            tlTooltip.classList.remove('visible');
+          });
+
+          blocksEl.appendChild(block);
+        });
+
+        rowEl.appendChild(monthsEl);
+        rowEl.appendChild(blocksEl);
+        tlStrip.appendChild(rowEl);
+      }
+    }
+
+    function openTimelineNote(key) {
+      tlActiveKey = key;
+      tlNoteDateEl.textContent = formatDateDisplay(key);
+      tlNoteTextarea.value = timelineNotes[key] || '';
+      tlNoteOverlay.classList.add('open');
+      setTimeout(() => tlNoteTextarea.focus(), 50);
+    }
+
+    function closeTimelineNote() {
+      if (tlActiveKey) {
+        const text = tlNoteTextarea.value;
+        if (text && text.trim()) {
+          timelineNotes[tlActiveKey] = text;
+        } else {
+          delete timelineNotes[tlActiveKey];
+        }
+        saveTimelineNotes();
+        renderTimeline();
+      }
+      tlActiveKey = null;
+      tlNoteOverlay.classList.remove('open');
+    }
+
+    tlNoteCloseBtn.addEventListener('click', closeTimelineNote);
+    tlNoteOverlay.addEventListener('click', (e) => {
+      if (e.target === tlNoteOverlay) closeTimelineNote();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && tlNoteOverlay.classList.contains('open')) {
+        closeTimelineNote();
+      }
+    });
+
+    const TIMELINE_POS_KEY = 'timeline_pos_y';
+
+    function getTimelineDefaultY() {
+      return window.innerHeight - tlStrip.offsetHeight;
+    }
+
+    function applyTimelineY(y) {
+      const maxY = window.innerHeight - tlStrip.offsetHeight;
+      const clamped = Math.max(0, Math.min(y, maxY));
+      tlStrip.style.top = clamped + 'px';
+      tlStrip.style.bottom = 'auto';
+    }
+
+    function saveTimelinePos() {
+      localStorage.setItem(TIMELINE_POS_KEY, tlStrip.style.top);
+    }
+
+    renderTimeline();
+
+    const savedTlY = localStorage.getItem(TIMELINE_POS_KEY);
+    applyTimelineY(savedTlY !== null ? parseFloat(savedTlY) : getTimelineDefaultY());
+
+    let tlDrag = null;
+
+    tlStrip.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      const rect = tlStrip.getBoundingClientRect();
+      tlDrag = {
+        offsetY: e.clientY - rect.top,
+        startY: e.clientY,
+        started: false,
+        pointerId: e.pointerId
+      };
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!tlDrag) return;
+      if (!tlDrag.started) {
+        if (Math.abs(e.clientY - tlDrag.startY) < 4) return;
+        tlDrag.started = true;
+        tlStrip.classList.add('dragging');
+        tlStrip.setPointerCapture(tlDrag.pointerId);
+      }
+      applyTimelineY(e.clientY - tlDrag.offsetY);
+    });
+
+    document.addEventListener('pointerup', () => {
+      if (!tlDrag) return;
+      const wasDragging = tlDrag.started;
+      tlDrag = null;
+      if (wasDragging) {
+        tlStrip.classList.remove('dragging');
+        const y = parseFloat(tlStrip.style.top) || 0;
+        const maxY = window.innerHeight - tlStrip.offsetHeight;
+        const snapped = snapCoordToGrid(y, 0, maxY, DRAGGABLE_SNAP_STEP);
+        tlStrip.style.top = snapped + 'px';
+        saveTimelinePos();
+      }
+    });
+
+    let tlResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(tlResizeTimer);
+      tlResizeTimer = setTimeout(() => {
+        renderTimeline();
+        applyTimelineY(parseFloat(tlStrip.style.top) || getTimelineDefaultY());
+      }, 100);
     });
   </script>
 
